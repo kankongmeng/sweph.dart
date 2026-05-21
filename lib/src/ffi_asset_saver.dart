@@ -1,4 +1,4 @@
-// Notice that this file is imported and not proxy_ffi.dart
+// Notice that in this file, we import dart:ffi and not proxy_ffi.dart
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -15,23 +15,10 @@ class SwephAssetSaver extends AbstractAssetSaver<DynamicLibrary, Allocator> {
   static Future<SwephAssetSaver> init(
       DynamicLibrary library, String epheFilesPath) async {
     if (_instance == null) {
-      String resolvedPath = epheFilesPath;
+      _instance = SwephAssetSaver._(epheFilesPath);
+
       final epheDir = Directory(epheFilesPath);
-      try {
-        epheDir.createSync(recursive: true);
-        // Test if directory is actually writable
-        final testFile = File('${epheDir.path}/.write_test');
-        testFile.writeAsBytesSync([0]);
-        testFile.deleteSync();
-      } catch (_) {
-        // Fallback to current working directory if app support dir is read-only
-        resolvedPath = epheFilesPath.contains('/')
-            ? epheFilesPath
-            : '${Directory.current.path}/$epheFilesPath';
-        final fallbackDir = Directory(resolvedPath);
-        fallbackDir.createSync(recursive: true);
-      }
-      _instance = SwephAssetSaver._(resolvedPath);
+      epheDir.createSync(recursive: true);
     }
 
     return _instance!;
