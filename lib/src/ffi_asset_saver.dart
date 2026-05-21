@@ -14,13 +14,24 @@ class SwephAssetSaver extends AbstractAssetSaver<DynamicLibrary, Allocator> {
 
   static Future<SwephAssetSaver> init(
       DynamicLibrary library, String epheFilesPath) async {
-    if (_instance == null) {
-      _instance = SwephAssetSaver._(epheFilesPath);
+    if (_instance != null) return _instance!;
 
-      final epheDir = Directory(epheFilesPath);
+    String resolvedPath = epheFilesPath;
+    final epheDir = Directory(epheFilesPath);
+    try {
       epheDir.createSync(recursive: true);
+      // Verify writable
+      final testFile = File('${epheDir.path}/.write_test');
+      testFile.writeAsBytesSync([0]);
+      testFile.deleteSync();
+    } catch (_) {
+      // Fallback: try app's cache directory (always writable on Android)
+      final cacheDir = Directory.systemTemp;
+      resolvedPath = '${cacheDir.path}/ephe_files';
+      final fallbackDir = Directory(resolvedPath);
+      fallbackDir.createSync(recursive: true);
     }
-
+    _instance = SwephAssetSaver._(resolvedPath);
     return _instance!;
   }
 
